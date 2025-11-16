@@ -126,12 +126,12 @@ http://localhost:8080
 
 ## 🧪 Example Questions to Try
 
-| Question                               | Expected Output                             |
-| -------------------------------------- | ------------------------------------------- |
-| “What is Layla’s seating preference?”  | “Aisle seats”                               |
-| “When is Amira traveling to Tokyo?”    | Travel date or fallback                     |
-| “How many cars does Vikram Desai own?” | Explicit number or fallback                 |
-| “Book me a restaurant”                 | Returns closest reservation-related message |
+| Question                               |                        |
+| -------------------------------------- | 
+| “What is Layla’s seating preference?”  |
+| “When is Amira traveling to Tokyo?”    | 
+| “How many cars does Vikram Desai own?” |
+| “Book me a restaurant”                 | 
 
 ---
 
