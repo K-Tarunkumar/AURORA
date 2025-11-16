@@ -1,103 +1,102 @@
 
+---
 
-A deep-learning powered API that answers natural-language questions about members using only data from the public **`/messages`** API.
+# 🧠 Member QA — Deep-Learning Question Answering API
+
+A **deep-learning powered API** that answers **natural-language questions about members** using only information from the public **`/messages`** API — **no external LLM APIs required.**
+
+---
+
+### 🚀 Example
+
+Ask:
+
+> *“When is Layla planning her trip to London?”*
+
+API responds:
+
+```json
+{ "answer": "Layla has a chauffeur scheduled to pick her up in London on March 19, 2025 at 9:30 AM." }
+```
 
 ---
 
 ## 📌 Overview
 
-This service allows clients to ask questions such as:
+This service allows clients to ask free-form natural-language questions and get precise structured answers.
 
-| Example Question                               | Expected Type      |
-| ---------------------------------------------- | ------------------ |
-| *“When is Layla planning her trip to London?”* | Date / Schedule    |
-| *“How many cars does Vikram Desai have?”*      | Number / Count     |
-| *“What are Amira’s favorite restaurants?”*     | Preferences / List |
+| Example Question                             | Expected Answer Type |
+| -------------------------------------------- | -------------------- |
+| “When is Layla planning her trip to London?” | Date / Schedule      |
+| “How many cars does Vikram Desai have?”      | Number / Count       |
+| “What are Amira’s favorite restaurants?”     | Preferences / List   |
 
-The system receives a free-form question, searches member messages, extracts relevant information, and responds:
-
-```json
-{ "answer": "..." }
-```
-
-The system is implemented with **FastAPI** and **local deep-learning models**—no external LLM APIs are used.
+The system pulls messages, builds embeddings, performs semantic search, and extracts the answer — all locally.
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ Architecture
 
-The QA engine follows a **retrieval-augmented deep learning pipeline**:
+The QA pipeline uses **Retrieval-Augmented Deep Learning**:
 
-1. Fetch all messages from the public `/messages` API
-2. Store them locally in `messages.json`
-3. Convert every message into a dense embedding using:
+1. Fetch messages from the public `/messages` API
+2. Store them in `messages.json`
+3. Generate embeddings using:
+   `sentence-transformers/all-MiniLM-L6-v2`
+4. Detect which **member** the question refers to
+5. Retrieve only messages **from that member**
+6. Run an extractive QA model:
+   `deepset/roberta-base-squad2`
+7. If no exact span is found → fallback to the best matching message
 
-   ```
-   sentence-transformers/all-MiniLM-L6-v2
-   ```
-4. For every question:
+### 🔐 Data Guarantee
 
-   * Detect **which member the question is about**
-   * Restrict search to **messages from that member only**
-   * Use cosine similarity to retrieve top-k relevant messages
-   * Run a **QA model**:
-
-     ```
-     deepset/roberta-base-squad2
-     ```
-
-     to extract an exact answer
-5. If extraction fails, return a **fallback answer** using the most relevant message from *that member only*.
-
-### ❗ Key Guarantee
-
-> The system never mixes members.
-> If the question is about *Amira*, results will **only** come from *Amira’s messages* — never from Layla or anyone else.
+> If the question is about **Amira**, only **Amira’s messages** are used — never from other members.
 
 ---
 
 ## 🔥 Features
 
-| Feature                         | Status |
+| Capability                      | Status |
 | ------------------------------- | ------ |
 | Natural-language question input | ✅      |
-| Deep-learning semantic search   | ✅      |
-| Extractive answer generation    | ✅      |
-| Member-restricted search        | ✅      |
+| Semantic vector search          | ✅      |
+| Extractive QA model             | ✅      |
+| Member-restricted retrieval     | ✅      |
 | Best-effort fallback            | ✅      |
-| `/refresh` to reload dataset    | ✅      |
-| Web UI (`index.html`)           | ✅      |
+| `/refresh` endpoint             | ✅      |
+| Built-in Web UI (`index.html`)  | ✅      |
 
 ---
 
 ## 🧠 Tech Stack
 
-| Component                | Purpose                     |
-| ------------------------ | --------------------------- |
-| FastAPI                  | REST API                    |
-| Sentence-Transformers    | Message semantic embeddings |
-| HuggingFace Transformers | Extractive QA               |
-| Torch                    | Model inference             |
-| NumPy                    | Vector similarity           |
-| Vanilla JS + HTML        | Test UI                     |
+| Component                | Role               |
+| ------------------------ | ------------------ |
+| FastAPI                  | REST API           |
+| Sentence-Transformers    | Message embeddings |
+| HuggingFace Transformers | QA inference       |
+| Torch                    | Model runtime      |
+| NumPy                    | Cosine similarity  |
+| HTML + Vanilla JS        | Browser UI         |
 
 ---
 
 ## 🔌 API Endpoints
 
-| Method | Route               | Description                            |
-| ------ | ------------------- | -------------------------------------- |
-| `GET`  | `/ask?question=...` | Ask any natural-language question      |
-| `GET`  | `/refresh`          | Re-download messages and rebuild index |
-| `GET`  | `/`                 | Web UI for testing                     |
+| Method | Route               | Description                          |
+| ------ | ------------------- | ------------------------------------ |
+| `GET`  | `/ask?question=...` | Ask any natural-language question    |
+| `GET`  | `/refresh`          | Reload messages + rebuild embeddings |
+| `GET`  | `/`                 | Web UI for manual testing            |
 
-### Example Request
+### Sample Request
 
 ```
 GET /ask?question=When%20is%20Layla%20planning%20her%20trip%20to%20London%3F
 ```
 
-### Example Response
+### Sample Response
 
 ```json
 { "answer": "Layla has a chauffeur scheduled to pick her up in London on March 19, 2025 at 9:30 AM." }
@@ -107,19 +106,19 @@ GET /ask?question=When%20is%20Layla%20planning%20her%20trip%20to%20London%3F
 
 ## ▶️ Running Locally
 
-### Install dependencies
+### 1️⃣ Install dependencies
 
 ```
 pip install -r requirements.txt
 ```
 
-### Start server
+### 2️⃣ Start the server
 
 ```
 uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
-### Open UI
+### 3️⃣ Open the UI
 
 ```
 http://localhost:8080
@@ -129,107 +128,102 @@ http://localhost:8080
 
 ## 🧪 Example Questions to Try
 
-| Question                                         | Expected Outcome                                                             |
-| ------------------------------------------------ | ---------------------------------------------------------------------------- |
-| “What is Layla’s seating preference on flights?” | Extracts “aisle seats”                                                       |
-| “When is Amira traveling to Tokyo?”              | Date if available, otherwise fallback                                        |
-| “How many cars does Vikram Desai own?”           | Explicit number or a fallback explanation                                    |
-| “Book me a restaurant”                           | Will identify the relevant member and return the closest reservation message |
+| Question                               | Expected Output                             |
+| -------------------------------------- | ------------------------------------------- |
+| “What is Layla’s seating preference?”  | “Aisle seats”                               |
+| “When is Amira traveling to Tokyo?”    | Travel date or fallback                     |
+| “How many cars does Vikram Desai own?” | Explicit number or fallback                 |
+| “Book me a restaurant”                 | Returns closest reservation-related message |
 
 ---
 
-## 📘 Bonus 1 — Design Notes (Alternative Approaches Considered)
+## 📘 Bonus 1 — Design Notes
 
-Several options were evaluated before selecting the current architecture.
+Alternative approaches evaluated:
 
-### A. Keyword Search
-
-Too brittle — fails when questions are paraphrased.
-
-### B. TF-IDF + Cosine Similarity
-
-Better recall but still confuses members with overlapping vocabulary.
-
-### C. End-to-End LLM
-
-Best language understanding but requires external APIs / GPU hosting, not permitted in this challenge context.
+| Approach                   | Result / Limitation                                 |
+| -------------------------- | --------------------------------------------------- |
+| Keyword Search             | Too brittle — fails on phrasing changes             |
+| TF-IDF + Cosine Similarity | Higher recall but member confusion                  |
+| End-to-End LLM             | Best performance but requires cloud GPU + API costs |
 
 ### ✔ Final Choice — Hybrid Retrieval + Extractive QA
 
 Combines:
 
-* Sentence-Transformer embeddings → semantic retrieval
-* Extractive QA model → precise answer spans
-* Member filtering → prevents cross-member contamination
-* Fallback logic → never leaves the user without a response
+* **Embeddings** → member-filtered semantic retrieval
+* **RoBERTa QA** → exact answer spans
+* **Fallbacks** → prevents blank / hallucinated responses
 
 ---
 
-## 📘 Bonus 2 — Data Insights (Anomalies Observed)
+## 📘 Bonus 2 — Data Insights
 
-During dataset exploration, the following inconsistencies were noted:
+| Category      | Observation                                          | Impact                           |
+| ------------- | ---------------------------------------------------- | -------------------------------- |
+| Identity      | Slight name variations across messages               | Splits persona unless normalized |
+| Content       | Some entries lack message text                       | Must be discarded                |
+| Time          | Many events dated 2025–2026                          | Indicates simulated dataset      |
+| Semantics     | Some facts implied but not explicit                  | Fallback required                |
+| Topic overlap | Heavy overlap in travel / restaurants across members | Naive search confuses personas   |
 
-| Category      | Finding                                                   | Impact                                   |
-| ------------- | --------------------------------------------------------- | ---------------------------------------- |
-| Identity      | Some members appear with slightly different names         | Risk of splitting data across identities |
-| Content       | Some entries are metadata without message text            | Must be filtered out                     |
-| Time          | Many events are scheduled far into the future (2025–2026) | Suggests synthetic / simulated dataset   |
-| Semantics     | Some facts are implied but not explicit                   | Requires safe fallback behavior          |
-| Topic overlap | Many members talk about travel/restaurants                | Can confuse naive similarity models      |
-
-These insights influenced the final model:
-
-* Strict **member filtering**
-* Fallback answers that **never hallucinate**
-* Only extracting facts that are explicitly stated
+These observations directly shaped the final solution.
 
 ---
 
-## 📄 Folder Structure (Recommended)
+## 📂 Project Structure
 
 ```
 project/
 │ main.py
+│ index.html
 │ requirements.txt
 │ README.md
-│ messages.json  (autogenerated)
-│ index.html
-└─ models/       (optional cache if pre-downloaded)
+│ messages.json      (autogenerated)
+└── models/          (optional — cached downloads)
 ```
 
 ---
 
-## 🚀 Deployment Notes
+## 🚀 Deployment
 
-The API is compatible with:
+Works on:
 
-| Environment      | Works? |
-| ---------------- | ------ |
-| Local / laptop   | ✅      |
-| Docker container | ✅      |
-| Render / Railway | ✅      |
-| Google Cloud Run | ✅      |
+| Platform         | Supported |
+| ---------------- | --------- |
+| Local machine    | ✅         |
+| Docker container | ✅         |
+| Render           | ✅         |
+| Railway          | ✅         |
+| Google Cloud Run | ✅         |
 
-The models are downloaded only **once**, then cached for future runs.
-
----
-
-## 📫 Contact & Support
-
-If you'd like help deploying to a cloud provider or adding:
-
-* async batching
-* vector database storage
-* conversation memory
-* evaluation metrics
-* logging and observability
-
-just create a GitHub issue or reach out.
+Models download once and remain cached.
 
 ---
 
-### 🎯 Final Statement
+## 📫 Support & Extensions
 
-> This project demonstrates that high-quality natural-language question answering can be achieved from structured user messages without external LLM APIs — by combining deep learning semantic retrieval, extractive QA, and carefully engineered fallback strategies.
+Open a GitHub Issue if you'd like help adding:
+
+* Vector database (Pinecone / FAISS / Qdrant)
+* Conversation memory
+* Async inference batching
+* CI/CD deployment to Render
+* Monitoring & observability
+
+Always happy to assist 🤝
 
 ---
+
+### 🏁 Final Remark
+
+> This project demonstrates that high-quality natural-language question answering — without external LLM APIs — is possible using a carefully engineered combination of semantic retrieval, extractive QA, and strict member-level filtering.
+
+---
+
+If you'd like, I can also:
+🔹 Add shields badges (Python, FastAPI, HuggingFace, Docker)
+🔹 Add screenshots / GIF of the UI
+🔹 Write a Docker section & deployment steps for Render
+
+Just say **“enhance README”** or **“generate GIF demo”**.
