@@ -1,6 +1,7 @@
 
 ---
 
+````md
 # 🧠 Member QA — Deep-Learning Question Answering API
 
 A **deep-learning powered API** that answers **natural-language questions about members** using only information from the public **`/messages`** API — **no external LLM APIs required.**
@@ -8,16 +9,13 @@ A **deep-learning powered API** that answers **natural-language questions about 
 ---
 
 ### 🚀 Example
-
 Ask:
-
-> *“When is Layla planning her trip to London?”*
+> _“When is Layla planning her trip to London?”_
 
 API responds:
-
 ```json
 { "answer": "Layla has a chauffeur scheduled to pick her up in London on March 19, 2025 at 9:30 AM." }
-```
+````
 
 ---
 
@@ -219,11 +217,9 @@ Always happy to assist 🤝
 
 > This project demonstrates that high-quality natural-language question answering — without external LLM APIs — is possible using a carefully engineered combination of semantic retrieval, extractive QA, and strict member-level filtering.
 
+```
+
 ---
 
-If you'd like, I can also:
-🔹 Add shields badges (Python, FastAPI, HuggingFace, Docker)
-🔹 Add screenshots / GIF of the UI
-🔹 Write a Docker section & deployment steps for Render
 
-Just say **“enhance README”** or **“generate GIF demo”**.
+```
