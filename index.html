@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Member Q&A (Deep Learning)</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 16px 40px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .card {
+      border-radius: 12px;
+      padding: 20px;
+      background: #f7f7f7;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    input {
+      font-size: 16px;
+      padding: 10px 12px;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 16px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      width: 100%;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    #answerBox {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      background: #eef2ff;
+      display: none;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Member Q&A (Deep Learning)</h1>
+
+  <div class="card">
+    <input
+      id="questionInput"
+      type="text"
+      placeholder="Ask anything about your members..."
+    />
+    <button id="askButton" onclick="ask()">Ask</button>
+
+    <div id="answerBox"></div>
+  </div>
+
+  <script>
+    async function ask() {
+      const questionInput = document.getElementById("questionInput");
+      const button = document.getElementById("askButton");
+      const answerBox = document.getElementById("answerBox");
+      const question = questionInput.value.trim();
+
+      if (!question) {
+        alert("Please enter a question.");
+        return;
+      }
+
+      button.disabled = true;
+      answerBox.style.display = "block";
+      answerBox.textContent = "⏳ Thinking...";
+
+      try {
+        const res = await fetch("/ask?question=" + encodeURIComponent(question));
+        const data = await res.json();
+        answerBox.textContent = "💡 " + (data.answer || "No answer.");
+      } catch (e) {
+        console.error(e);
+        answerBox.textContent = "❌ Error contacting the server.";
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    document
+      .getElementById("questionInput")
+      .addEventListener("keydown", (e) => {
+        if (e.key === "Enter") ask();
+      });
+  </script>
+</body>
+</html>

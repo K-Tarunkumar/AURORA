@@ -1,0 +1,235 @@
+
+
+A deep-learning powered API that answers natural-language questions about members using only data from the public **`/messages`** API.
+
+---
+
+## 📌 Overview
+
+This service allows clients to ask questions such as:
+
+| Example Question                               | Expected Type      |
+| ---------------------------------------------- | ------------------ |
+| *“When is Layla planning her trip to London?”* | Date / Schedule    |
+| *“How many cars does Vikram Desai have?”*      | Number / Count     |
+| *“What are Amira’s favorite restaurants?”*     | Preferences / List |
+
+The system receives a free-form question, searches member messages, extracts relevant information, and responds:
+
+```json
+{ "answer": "..." }
+```
+
+The system is implemented with **FastAPI** and **local deep-learning models**—no external LLM APIs are used.
+
+---
+
+## ⚙️ How It Works
+
+The QA engine follows a **retrieval-augmented deep learning pipeline**:
+
+1. Fetch all messages from the public `/messages` API
+2. Store them locally in `messages.json`
+3. Convert every message into a dense embedding using:
+
+   ```
+   sentence-transformers/all-MiniLM-L6-v2
+   ```
+4. For every question:
+
+   * Detect **which member the question is about**
+   * Restrict search to **messages from that member only**
+   * Use cosine similarity to retrieve top-k relevant messages
+   * Run a **QA model**:
+
+     ```
+     deepset/roberta-base-squad2
+     ```
+
+     to extract an exact answer
+5. If extraction fails, return a **fallback answer** using the most relevant message from *that member only*.
+
+### ❗ Key Guarantee
+
+> The system never mixes members.
+> If the question is about *Amira*, results will **only** come from *Amira’s messages* — never from Layla or anyone else.
+
+---
+
+## 🔥 Features
+
+| Feature                         | Status |
+| ------------------------------- | ------ |
+| Natural-language question input | ✅      |
+| Deep-learning semantic search   | ✅      |
+| Extractive answer generation    | ✅      |
+| Member-restricted search        | ✅      |
+| Best-effort fallback            | ✅      |
+| `/refresh` to reload dataset    | ✅      |
+| Web UI (`index.html`)           | ✅      |
+
+---
+
+## 🧠 Tech Stack
+
+| Component                | Purpose                     |
+| ------------------------ | --------------------------- |
+| FastAPI                  | REST API                    |
+| Sentence-Transformers    | Message semantic embeddings |
+| HuggingFace Transformers | Extractive QA               |
+| Torch                    | Model inference             |
+| NumPy                    | Vector similarity           |
+| Vanilla JS + HTML        | Test UI                     |
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Route               | Description                            |
+| ------ | ------------------- | -------------------------------------- |
+| `GET`  | `/ask?question=...` | Ask any natural-language question      |
+| `GET`  | `/refresh`          | Re-download messages and rebuild index |
+| `GET`  | `/`                 | Web UI for testing                     |
+
+### Example Request
+
+```
+GET /ask?question=When%20is%20Layla%20planning%20her%20trip%20to%20London%3F
+```
+
+### Example Response
+
+```json
+{ "answer": "Layla has a chauffeur scheduled to pick her up in London on March 19, 2025 at 9:30 AM." }
+```
+
+---
+
+## ▶️ Running Locally
+
+### Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+### Start server
+
+```
+uvicorn main:app --host 0.0.0.0 --port 8080
+```
+
+### Open UI
+
+```
+http://localhost:8080
+```
+
+---
+
+## 🧪 Example Questions to Try
+
+| Question                                         | Expected Outcome                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| “What is Layla’s seating preference on flights?” | Extracts “aisle seats”                                                       |
+| “When is Amira traveling to Tokyo?”              | Date if available, otherwise fallback                                        |
+| “How many cars does Vikram Desai own?”           | Explicit number or a fallback explanation                                    |
+| “Book me a restaurant”                           | Will identify the relevant member and return the closest reservation message |
+
+---
+
+## 📘 Bonus 1 — Design Notes (Alternative Approaches Considered)
+
+Several options were evaluated before selecting the current architecture.
+
+### A. Keyword Search
+
+Too brittle — fails when questions are paraphrased.
+
+### B. TF-IDF + Cosine Similarity
+
+Better recall but still confuses members with overlapping vocabulary.
+
+### C. End-to-End LLM
+
+Best language understanding but requires external APIs / GPU hosting, not permitted in this challenge context.
+
+### ✔ Final Choice — Hybrid Retrieval + Extractive QA
+
+Combines:
+
+* Sentence-Transformer embeddings → semantic retrieval
+* Extractive QA model → precise answer spans
+* Member filtering → prevents cross-member contamination
+* Fallback logic → never leaves the user without a response
+
+---
+
+## 📘 Bonus 2 — Data Insights (Anomalies Observed)
+
+During dataset exploration, the following inconsistencies were noted:
+
+| Category      | Finding                                                   | Impact                                   |
+| ------------- | --------------------------------------------------------- | ---------------------------------------- |
+| Identity      | Some members appear with slightly different names         | Risk of splitting data across identities |
+| Content       | Some entries are metadata without message text            | Must be filtered out                     |
+| Time          | Many events are scheduled far into the future (2025–2026) | Suggests synthetic / simulated dataset   |
+| Semantics     | Some facts are implied but not explicit                   | Requires safe fallback behavior          |
+| Topic overlap | Many members talk about travel/restaurants                | Can confuse naive similarity models      |
+
+These insights influenced the final model:
+
+* Strict **member filtering**
+* Fallback answers that **never hallucinate**
+* Only extracting facts that are explicitly stated
+
+---
+
+## 📄 Folder Structure (Recommended)
+
+```
+project/
+│ main.py
+│ requirements.txt
+│ README.md
+│ messages.json  (autogenerated)
+│ index.html
+└─ models/       (optional cache if pre-downloaded)
+```
+
+---
+
+## 🚀 Deployment Notes
+
+The API is compatible with:
+
+| Environment      | Works? |
+| ---------------- | ------ |
+| Local / laptop   | ✅      |
+| Docker container | ✅      |
+| Render / Railway | ✅      |
+| Google Cloud Run | ✅      |
+
+The models are downloaded only **once**, then cached for future runs.
+
+---
+
+## 📫 Contact & Support
+
+If you'd like help deploying to a cloud provider or adding:
+
+* async batching
+* vector database storage
+* conversation memory
+* evaluation metrics
+* logging and observability
+
+just create a GitHub issue or reach out.
+
+---
+
+### 🎯 Final Statement
+
+> This project demonstrates that high-quality natural-language question answering can be achieved from structured user messages without external LLM APIs — by combining deep learning semantic retrieval, extractive QA, and carefully engineered fallback strategies.
+
+---
